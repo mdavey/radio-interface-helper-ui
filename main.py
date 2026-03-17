@@ -16,29 +16,29 @@ import sys
 import subprocess
 import tkinter as tk
 from tkinter import ttk, messagebox
-
-try:
-    import serial
-    from serial.tools import list_ports
-except ImportError as e:
-    # If PySerial is not installed, show a message and exit gracefully
-    tk.Tk().withdraw()
-    messagebox.showerror(
-        "Missing Dependency",
-        "PySerial is required.\nInstall with: pip install pyserial",
-    )
-    sys.exit(1)
+from pipewiredump import PipeWireDump
+import serial
+from serial.tools import list_ports
 
 
-STANDARD_AUDIO_SINK       = 125  # 125. miniDSP 2x4HD Analog Stereo         [vol: 0.50]
-STANDARD_AUDIO_SINK_VOL   = 0.50
-STANDARD_AUDIO_SOURCE     = 95   # 95. alsa_input.usb-ARTURIA_MiniFuse_2_8840400501033904-00.HiFi__Line3__source [Audio/Source]
-STANDARD_AUDIO_SOURCE_VOL = 1.0
-
-RADIO_AUDIO_SINK       = 101  # 101. USB Audio Device Analog Stereo      [vol: 0.41]
-RADIO_AUDIO_SINK_VOL   = 0.70
-RADIO_AUDIO_SOURCE     = 102  # 102. USB Audio Device Mono               [vol: 0.38]
-RADIO_AUDIO_SOURCE_VOL = 0.38
+AudioDevices = {
+    'standard': {
+        'sink': 'alsa_output.usb-miniDSP_miniDSP_2x4HD-00.analog-stereo',
+        'source': 'alsa_input.usb-ARTURIA_MiniFuse_2_8840400501033904-00.HiFi__Line3__source',
+        'sink_volume': 0.5,
+        'source_volume': 1.0,
+        'sink_id': None,
+        'source_id': None
+    },
+    'radio': {
+        'sink': 'alsa_output.usb-C-Media_Electronics_Inc._USB_Audio_Device-00.analog-stereo',
+        'source': 'alsa_input.usb-C-Media_Electronics_Inc._USB_Audio_Device-00.mono-fallback',
+        'sink_volume': 0.70,
+        'source_volume': 0.38,
+        'sink_id': None,
+        'source_id': None
+    }
+}
 
 
 def set_default_audio_device(device_id: int) -> bool:
@@ -352,26 +352,26 @@ class RTSControllerApp(tk.Tk):
         return True
 
     def set_default_audio(self):
-        """Switch to default audio devices with their configured volumes."""
+        global AudioDevices
         # Set default audio sink and volume
-        set_default_audio_device(STANDARD_AUDIO_SINK)
-        set_audio_device_volume(STANDARD_AUDIO_SINK, STANDARD_AUDIO_SINK_VOL)
+        set_default_audio_device(AudioDevices['standard']['sink_id'])
+        set_audio_device_volume(AudioDevices['standard']['sink_id'], AudioDevices['standard']['sink_volume'])
         
         # Set default audio source and volume
-        set_default_audio_device(STANDARD_AUDIO_SOURCE)
-        set_audio_device_volume(STANDARD_AUDIO_SOURCE, STANDARD_AUDIO_SOURCE_VOL)
+        set_default_audio_device(AudioDevices['standard']['source_id'])
+        set_audio_device_volume(AudioDevices['standard']['source_id'], AudioDevices['standard']['source_volume'])
         
         self.status_var.set("Switched to Default Audio")
 
     def set_radio_audio(self):
-        """Switch to radio audio devices with their configured volumes."""
+        global AudioDevices
         # Set radio audio sink and volume
-        set_default_audio_device(RADIO_AUDIO_SINK)
-        set_audio_device_volume(RADIO_AUDIO_SINK, RADIO_AUDIO_SINK_VOL)
+        set_default_audio_device(AudioDevices['radio']['sink_id'])
+        set_audio_device_volume(AudioDevices['radio']['sink_id'], AudioDevices['radio']['sink_volume'])
         
         # Set radio audio source and volume
-        set_default_audio_device(RADIO_AUDIO_SOURCE)
-        set_audio_device_volume(RADIO_AUDIO_SOURCE, RADIO_AUDIO_SOURCE_VOL)
+        set_default_audio_device(AudioDevices['radio']['source_id'])
+        set_audio_device_volume(AudioDevices['radio']['source_id'], AudioDevices['radio']['source_volume'])
         
         self.status_var.set("Switched to Radio Audio")
 
@@ -382,6 +382,29 @@ class RTSControllerApp(tk.Tk):
 
 
 def main():
+
+    # Fill in the sink_id and source_id params from the AudioDevices config object
+    global AudioDevices
+    pwd = PipeWireDump()
+    pwd.refresh()
+
+    AudioDevices['standard']['sink_id']   = pwd.get_node_id_by_name(AudioDevices['standard']['sink'])
+    AudioDevices['standard']['source_id'] = pwd.get_node_id_by_name(AudioDevices['standard']['source'])
+    AudioDevices['radio']['sink_id']      = pwd.get_node_id_by_name(AudioDevices['radio']['sink'])
+    AudioDevices['radio']['source_id']    = pwd.get_node_id_by_name(AudioDevices['radio']['source'])
+
+    if None in [AudioDevices['standard']['sink_id'],
+                AudioDevices['standard']['source_id'],
+                AudioDevices['radio']['sink_id'],
+                AudioDevices['radio']['source_id']]:
+
+        messagebox.showerror(
+            "Unknown Audio Devices",
+            "Unable to match all audio device names to an id.\n\nuv run pipewiredump.py to get a full list.",
+        )
+        sys.exit(1)
+
+
     app = RTSControllerApp()
     app.mainloop()
 
