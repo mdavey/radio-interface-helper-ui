@@ -70,13 +70,29 @@ def button_switch_radio_audio(sender, data):
     except Exception as e:
         set_status_text("Unable to set audio: " + str(e))
 
+
+# Setup fonts, and make the default_font the default
+with dpg.font_registry():
+    # first argument ids the path to the .ttf or .otf file
+    default_font = dpg.add_font("assets/NotoSans-Regular.ttf", 18)
+    heading_font = dpg.add_font("assets/NotoSans-Bold.ttf", 18)
+
+dpg.bind_font(default_font)
+
+
 with dpg.window(tag="Primary Window"):
-    dpg.add_text("Serial Port")
-    dpg.add_combo(SerialPortAccess.list_devices(), label="Local Ports", callback=com_port_changed)
+
+    dpg.add_text("Serial Port:", tag="HeadingSerialPort")
+    dpg.bind_item_font(dpg.last_item(), heading_font)
+
+    dpg.add_combo(SerialPortAccess.list_devices(), callback=com_port_changed)
     dpg.add_button(label="Set RTS", callback=button_set_rts)
     dpg.add_button(label="Clear RTS", callback=button_clear_rts)
     dpg.add_spacer()
-    dpg.add_text("Audio")
+
+    dpg.add_text("Audio Devices:", tag="HeadingAudio")
+    dpg.bind_item_font(dpg.last_item(), heading_font)
+
     dpg.add_button(label="Local Audio", callback=button_switch_local_audio)
     dpg.add_button(label="Radio Audio", callback=button_switch_radio_audio)
     dpg.add_spacer()
@@ -90,6 +106,15 @@ with dpg.theme() as global_theme:
         dpg.add_theme_style(dpg.mvStyleVar_WindowBorderSize, 0)
 
 dpg.bind_theme(global_theme)
+
+# Style the Text a little too I guess
+with dpg.theme() as heading_theme:
+    with dpg.theme_component(dpg.mvAll):
+        dpg.add_theme_color(dpg.mvThemeCol_Text, (160, 70, 40))
+
+dpg.bind_item_theme("HeadingSerialPort", heading_theme)
+dpg.bind_item_theme("HeadingAudio", heading_theme)
+
 
 # Single window
 dpg.create_viewport(title='FTM-150 Helper', width=500, height=300)
