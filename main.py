@@ -16,8 +16,8 @@ DefaultAudioDevice = AudioDeviceDefinition(
 RadioAudioDevice = AudioDeviceDefinition(
     sink          = 'alsa_output.usb-C-Media_Electronics_Inc._USB_Audio_Device-00.analog-stereo',
     source        = 'alsa_input.usb-C-Media_Electronics_Inc._USB_Audio_Device-00.mono-fallback',
-    sink_volume   = 0.7,
-    source_volume = 0.38
+    sink_volume   = 0.7,  # 0.70 is about right for my FTM-150
+    source_volume = 0.38  # over 0.40 causes received audio to clip
 )
 
 # Wrapper class around pySerial  (was meant to add better error messages and state, etc...
