@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/ftm-150-interface.iml" filepath="$PROJECT_DIR$/ftm-150-interface.iml" />
+      <module fileurl="file://$PROJECT_DIR$/radio-interface-helper-ui.iml" filepath="$PROJECT_DIR$/radio-interface-helper-ui.iml" />
     </modules>
   </component>
 </project>

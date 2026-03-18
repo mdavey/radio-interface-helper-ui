@@ -117,7 +117,7 @@ dpg.bind_item_theme("HeadingAudio", heading_theme)
 
 
 # Single window
-dpg.create_viewport(title='FTM-150 Helper', width=500, height=300)
+dpg.create_viewport(title='Radio Interface Helper', width=500, height=300)
 dpg.set_viewport_resizable(True)
 dpg.setup_dearpygui()
 dpg.show_viewport()
