@@ -16,9 +16,9 @@ It *might* be useful for someone to take some code from.
 ## Requirements
 
 * Linux
-* Python3
-* UV
-* Wire Plumber Audio
+* Python 3.12+
+* uv
+* PipeWire & WirePlumber
 
 ## Installing
 
@@ -42,8 +42,8 @@ Then change these values to match your setup:
 DefaultAudioDevice = AudioDeviceDefinition(
     sink          = 'alsa_output.usb-miniDSP_miniDSP_2x4HD-00.analog-stereo',
     source        = 'alsa_input.usb-ARTURIA_MiniFuse_2_8840400501033904-00.HiFi__Line3__source',
-    sink_volume   = 0.5,
-    source_volume = 1.0
+    sink_volume   = -1.0,  # -1.0 = leave volume alone
+    source_volume = -1.0
 )
 
 RadioAudioDevice = AudioDeviceDefinition(
@@ -59,3 +59,7 @@ RadioAudioDevice = AudioDeviceDefinition(
 ```bash
 uv run main.py
 ```
+
+## License
+
+MIT
