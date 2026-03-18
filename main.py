@@ -15,88 +15,78 @@ Dependencies:
 import sys
 import subprocess
 import tkinter as tk
+from dataclasses import dataclass
 from tkinter import ttk, messagebox
 from pipewiredump import PipeWireDump
 import serial
 from serial.tools import list_ports
 
 
-AudioDevices = {
-    'standard': {
-        'sink': 'alsa_output.usb-miniDSP_miniDSP_2x4HD-00.analog-stereo',
-        'source': 'alsa_input.usb-ARTURIA_MiniFuse_2_8840400501033904-00.HiFi__Line3__source',
-        'sink_volume': 0.5,
-        'source_volume': 1.0,
-        'sink_id': None,
-        'source_id': None
-    },
-    'radio': {
-        'sink': 'alsa_output.usb-C-Media_Electronics_Inc._USB_Audio_Device-00.analog-stereo',
-        'source': 'alsa_input.usb-C-Media_Electronics_Inc._USB_Audio_Device-00.mono-fallback',
-        'sink_volume': 0.70,
-        'source_volume': 0.38,
-        'sink_id': None,
-        'source_id': None
-    }
-}
+@dataclass
+class AudioDeviceDefinition:
+    """
+    This is a helper class to abstract talking to the OS about the audio devices
+    We are working with both a Sink (speaker) and Source (microphone) device as a pair
+    Is uses the PipeWireDump (pw-dump) to turns PipeWire node names into ids at runtime
+    And wp-ctl to set volumes and default devices
+    """
+    sink: str
+    source: str
+    sink_volume: float
+    source_volume: float
+    sink_id: int = None
+    source_id: int = None
+
+    @staticmethod
+    def _get_pw_dump(force_refresh=False) -> PipeWireDump:
+        """
+        There's logic that says it should always refresh.  Who knows what the user is plugging in and removing while
+        running this program?
+        """
+        if not hasattr(AudioDeviceDefinition, '._pwd') or force_refresh:
+            AudioDeviceDefinition._pwd = PipeWireDump()
+            AudioDeviceDefinition._pwd.refresh()
+        return AudioDeviceDefinition._pwd
+
+    def get_sink_id(self) -> int:
+        return self._get_pw_dump().get_node_id_by_name(self.sink)
+
+    def get_source_id(self) -> int:
+        return self._get_pw_dump().get_node_id_by_name(self.source)
+
+    @staticmethod
+    def _set_volume(node_id: int, volume: float) -> None:
+        subprocess.run(["wpctl", "set-volume", str(node_id), str(volume)])
+
+    def set_sink_volume(self) -> None:
+        self._set_volume(self.get_sink_id(), self.sink_volume)
+
+    def set_source_volume(self) -> None:
+        self._set_volume(self.get_source_id(), self.source_volume)
+        pass
+
+    @staticmethod
+    def _set_default(node_id: int) -> None:
+        subprocess.run(["wpctl", "set-default", str(node_id)])
+
+    def set_as_default(self):
+        self._set_default(self.get_sink_id())
+        self._set_default(self.get_source_id())
 
 
-def set_default_audio_device(device_id: int) -> bool:
-    """
-    Set the default audio device using wpctl.
-    
-    Args:
-        device_id: The ID of the audio device to set as default
-        
-    Returns:
-        True if successful, False otherwise
-    """
-    try:
-        subprocess.run(
-            ["wpctl", "set-default", str(device_id)],
-            check=True,
-            capture_output=True,
-            text=True
-        )
-        return True
-    except subprocess.CalledProcessError as e:
-        print(f"Failed to set default audio device: {e.stderr}")
-        return False
-    except FileNotFoundError:
-        print("wpctl command not found. PipeWire may not be installed.")
-        return False
+DefaultAudioDevice = AudioDeviceDefinition(
+    sink          = 'alsa_output.usb-miniDSP_miniDSP_2x4HD-00.analog-stereo',
+    source        = 'alsa_input.usb-ARTURIA_MiniFuse_2_8840400501033904-00.HiFi__Line3__source',
+    sink_volume   = 0.5,
+    source_volume = 1.0
+)
 
-
-def set_audio_device_volume(device_id: int, volume: float) -> bool:
-    """
-    Set the volume of an audio device using wpctl.
-    
-    Args:
-        device_id: The ID of the audio device
-        volume: Volume level between 0.0 and 1.0
-        
-    Returns:
-        True if successful, False otherwise
-    """
-    # Validate volume range
-    if not 0.0 <= volume <= 1.0:
-        print(f"Volume must be between 0.0 and 1.0, got: {volume}")
-        return False
-    
-    try:
-        subprocess.run(
-            ["wpctl", "set-volume", str(device_id), str(volume)],
-            check=True,
-            capture_output=True,
-            text=True
-        )
-        return True
-    except subprocess.CalledProcessError as e:
-        print(f"Failed to set audio device volume: {e.stderr}")
-        return False
-    except FileNotFoundError:
-        print("wpctl command not found. PipeWire may not be installed.")
-        return False
+RadioAudioDevice = AudioDeviceDefinition(
+    sink          = 'alsa_output.usb-C-Media_Electronics_Inc._USB_Audio_Device-00.analog-stereo',
+    source        = 'alsa_input.usb-C-Media_Electronics_Inc._USB_Audio_Device-00.mono-fallback',
+    sink_volume   = 0.7,
+    source_volume = 0.38
+)
 
 
 class RTSControllerApp(tk.Tk):
@@ -352,27 +342,15 @@ class RTSControllerApp(tk.Tk):
         return True
 
     def set_default_audio(self):
-        global AudioDevices
-        # Set default audio sink and volume
-        set_default_audio_device(AudioDevices['standard']['sink_id'])
-        set_audio_device_volume(AudioDevices['standard']['sink_id'], AudioDevices['standard']['sink_volume'])
-        
-        # Set default audio source and volume
-        set_default_audio_device(AudioDevices['standard']['source_id'])
-        set_audio_device_volume(AudioDevices['standard']['source_id'], AudioDevices['standard']['source_volume'])
-        
+        global DefaultAudioDevice
+        DefaultAudioDevice.set_as_default()
         self.status_var.set("Switched to Default Audio")
 
     def set_radio_audio(self):
-        global AudioDevices
-        # Set radio audio sink and volume
-        set_default_audio_device(AudioDevices['radio']['sink_id'])
-        set_audio_device_volume(AudioDevices['radio']['sink_id'], AudioDevices['radio']['sink_volume'])
-        
-        # Set radio audio source and volume
-        set_default_audio_device(AudioDevices['radio']['source_id'])
-        set_audio_device_volume(AudioDevices['radio']['source_id'], AudioDevices['radio']['source_volume'])
-        
+        global RadioAudioDevice
+        RadioAudioDevice.set_as_default()
+        RadioAudioDevice.set_sink_volume()
+        RadioAudioDevice.set_source_volume()
         self.status_var.set("Switched to Radio Audio")
 
     def on_close(self):
@@ -382,29 +360,6 @@ class RTSControllerApp(tk.Tk):
 
 
 def main():
-
-    # Fill in the sink_id and source_id params from the AudioDevices config object
-    global AudioDevices
-    pwd = PipeWireDump()
-    pwd.refresh()
-
-    AudioDevices['standard']['sink_id']   = pwd.get_node_id_by_name(AudioDevices['standard']['sink'])
-    AudioDevices['standard']['source_id'] = pwd.get_node_id_by_name(AudioDevices['standard']['source'])
-    AudioDevices['radio']['sink_id']      = pwd.get_node_id_by_name(AudioDevices['radio']['sink'])
-    AudioDevices['radio']['source_id']    = pwd.get_node_id_by_name(AudioDevices['radio']['source'])
-
-    if None in [AudioDevices['standard']['sink_id'],
-                AudioDevices['standard']['source_id'],
-                AudioDevices['radio']['sink_id'],
-                AudioDevices['radio']['source_id']]:
-
-        messagebox.showerror(
-            "Unknown Audio Devices",
-            "Unable to match all audio device names to an id.\n\nuv run pipewiredump.py to get a full list.",
-        )
-        sys.exit(1)
-
-
     app = RTSControllerApp()
     app.mainloop()
 
