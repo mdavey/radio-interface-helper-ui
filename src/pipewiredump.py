@@ -25,10 +25,3 @@ class PipeWireDump:
             if node['info']['props']['node.name'] == name:
                 return int(node['id'])
         return None
-
-if __name__ == '__main__':
-    pwd = PipeWireDump()
-    pwd.refresh()
-
-    for name in pwd.get_node_names():
-        print("{} - {}".format(pwd.get_node_id_by_name(name), name))

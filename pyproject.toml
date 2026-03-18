@@ -1,0 +1,9 @@
+[project]
+name = "ftm-150-interface"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.13"
+dependencies = [
+    "dearpygui>=2.2",
+    "pyserial>=3.5",
+]
