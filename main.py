@@ -3,11 +3,14 @@ from src.audiodevicedefinition import AudioDeviceDefinition
 from src.serialportaccess import SerialPortAccess
 
 
+# Change these.  Sink is where audio is sent.  Source is where audio comes from.
+# Volume is float between 0.0 and 1.0
+# A value of -1.0 means volume won't be adjusted when swaping
 DefaultAudioDevice = AudioDeviceDefinition(
     sink          = 'alsa_output.usb-miniDSP_miniDSP_2x4HD-00.analog-stereo',
     source        = 'alsa_input.usb-ARTURIA_MiniFuse_2_8840400501033904-00.HiFi__Line3__source',
-    sink_volume   = 0.5,
-    source_volume = 1.0
+    sink_volume   = -1.0,
+    source_volume = -1.0
 )
 
 RadioAudioDevice = AudioDeviceDefinition(
@@ -55,7 +58,7 @@ def button_clear_rts(sender, data):
 def button_switch_local_audio(sender, data):
     global DefaultAudioDevice
     try:
-        DefaultAudioDevice.set_as_default()
+        DefaultAudioDevice.switch()
         set_status_text("Audio switched to default")
     except Exception as e:
         set_status_text("Unable to set audio: " + str(e))
@@ -63,9 +66,7 @@ def button_switch_local_audio(sender, data):
 def button_switch_radio_audio(sender, data):
     global RadioAudioDevice
     try:
-        RadioAudioDevice.set_as_default()
-        RadioAudioDevice.set_sink_volume()
-        RadioAudioDevice.set_source_volume()
+        RadioAudioDevice.switch()
         set_status_text("Audio switched to radio")
     except Exception as e:
         set_status_text("Unable to set audio: " + str(e))

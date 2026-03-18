@@ -19,45 +19,25 @@ class AudioDeviceDefinition:
     source_id: int = None
 
     @staticmethod
-    def _get_pw_dump(force_refresh=False) -> PipeWireDump:
-        """
-        There's logic that says it should always refresh.  Who knows what the user is plugging in and removing while
-        running this program?
-        """
-        if not hasattr(AudioDeviceDefinition, '._pwd') or force_refresh:
-            AudioDeviceDefinition._pwd = PipeWireDump()
-            AudioDeviceDefinition._pwd.refresh()
-        return AudioDeviceDefinition._pwd
-
-    def get_sink_id(self) -> int:
-        return self._get_pw_dump().get_node_id_by_name(self.sink)
-
-    def get_source_id(self) -> int:
-        return self._get_pw_dump().get_node_id_by_name(self.source)
-
-    @staticmethod
     def _set_volume(node_id: int, volume: float) -> None:
         subprocess.run(["wpctl", "set-volume", str(node_id), str(volume)])
-
-    def set_sink_volume(self) -> None:
-        self._set_volume(self.get_sink_id(), self.sink_volume)
-
-    def set_source_volume(self) -> None:
-        self._set_volume(self.get_source_id(), self.source_volume)
-        pass
 
     @staticmethod
     def _set_default(node_id: int) -> None:
         subprocess.run(["wpctl", "set-default", str(node_id)])
 
-    def set_as_default(self):
-        self._set_default(self.get_sink_id())
-        self._set_default(self.get_source_id())
+    def switch(self):
+        pwd = PipeWireDump()
+        pwd.refresh()
 
+        sink_id   = pwd.get_node_id_by_name(self.sink)
+        source_id = pwd.get_node_id_by_name(self.source)
 
-if __name__ == '__main__':
-    pwd = PipeWireDump()
-    pwd.refresh()
+        self._set_default(sink_id)
+        self._set_default(source_id)
 
-    for name in pwd.get_node_names():
-        print("{} - {}".format(pwd.get_node_id_by_name(name), name))
+        if self.sink_volume >= 0.0:
+            self._set_volume(sink_id, self.sink_volume)
+
+        if self.source_volume >= 0.0:
+            self._set_volume(source_id, self.source_volume)
