@@ -3,6 +3,9 @@ import json
 
 
 class PipeWireDump:
+    """
+    Reads the output of pw-dump and parses out a list of PipeWire:Interface nodes
+    """
     def __init__(self):
         self.items = []
         pass
