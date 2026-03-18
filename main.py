@@ -17,7 +17,8 @@ RadioAudioDevice = AudioDeviceDefinition(
     source_volume = 0.38
 )
 
-
+# Wrapper class around pySerial  (was meant to add better error messages and state, etc...
+# But right now does almost nothing)
 SerialPort = SerialPortAccess()
 
 
@@ -53,16 +54,21 @@ def button_clear_rts(sender, data):
 
 def button_switch_local_audio(sender, data):
     global DefaultAudioDevice
-    DefaultAudioDevice.set_as_default()
-    set_status_text("Audio switched to default")
+    try:
+        DefaultAudioDevice.set_as_default()
+        set_status_text("Audio switched to default")
+    except Exception as e:
+        set_status_text("Unable to set audio: " + str(e))
 
 def button_switch_radio_audio(sender, data):
     global RadioAudioDevice
-    RadioAudioDevice.set_as_default()
-    RadioAudioDevice.set_sink_volume()
-    RadioAudioDevice.set_source_volume()
-    set_status_text("Audio switched to radio")
-
+    try:
+        RadioAudioDevice.set_as_default()
+        RadioAudioDevice.set_sink_volume()
+        RadioAudioDevice.set_source_volume()
+        set_status_text("Audio switched to radio")
+    except Exception as e:
+        set_status_text("Unable to set audio: " + str(e))
 
 with dpg.window(tag="Primary Window"):
     dpg.add_text("Serial Port")
@@ -74,9 +80,9 @@ with dpg.window(tag="Primary Window"):
     dpg.add_button(label="Local Audio", callback=button_switch_local_audio)
     dpg.add_button(label="Radio Audio", callback=button_switch_radio_audio)
     dpg.add_spacer()
-    dpg.add_text("...", tag="StatusBar")
+    dpg.add_text("", tag="StatusBar")
 
-
+# Add some rounded corners for fun, and turn off the window border as there is only a single window
 with dpg.theme() as global_theme:
     with dpg.theme_component(dpg.mvAll):
         dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 8)
@@ -85,7 +91,7 @@ with dpg.theme() as global_theme:
 
 dpg.bind_theme(global_theme)
 
-
+# Single window
 dpg.create_viewport(title='FTM-150 Helper', width=500, height=300)
 dpg.set_viewport_resizable(True)
 dpg.setup_dearpygui()
