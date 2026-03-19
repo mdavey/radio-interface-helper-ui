@@ -37,6 +37,11 @@ def com_port_changed(sender, data):
     except Exception as e:
         set_status_text(str(e))
 
+def button_refresh_ports(sender, data):
+    devices = SerialPortAccess.list_devices()
+    dpg.configure_item("PortListCombo", items=devices)
+    set_status_text("Found {} devices".format(len(devices)))
+
 def button_set_rts(sender, data):
     global SerialPort
     if SerialPort.is_valid():
@@ -57,7 +62,7 @@ def button_switch_local_audio(sender, data):
     global DefaultAudioDevice
     try:
         DefaultAudioDevice.switch()
-        set_status_text("Audio switched to default")
+        set_status_text("Audio switched to Local")
     except Exception as e:
         set_status_text("Unable to set audio: " + str(e))
 
@@ -65,7 +70,7 @@ def button_switch_radio_audio(sender, data):
     global RadioAudioDevice
     try:
         RadioAudioDevice.switch()
-        set_status_text("Audio switched to radio")
+        set_status_text("Audio switched to Radio")
     except Exception as e:
         set_status_text("Unable to set audio: " + str(e))
 
@@ -95,24 +100,48 @@ with dpg.theme() as text_heading_theme:
     with dpg.theme_component(dpg.mvAll):
         dpg.add_theme_color(dpg.mvThemeCol_Text, (160, 70, 40))
 
+# Finally, setup hotkeys
+with dpg.handler_registry():
+    dpg.add_key_press_handler(dpg.mvKey_S, callback=button_set_rts)
+    dpg.add_key_press_handler(dpg.mvKey_C, callback=button_clear_rts)
+    dpg.add_key_press_handler(dpg.mvKey_L, callback=button_switch_local_audio)
+    dpg.add_key_press_handler(dpg.mvKey_R, callback=button_switch_radio_audio)
+    dpg.add_key_press_handler(dpg.mvKey_Q, callback=lambda: dpg.stop_dearpygui())
+
 
 with dpg.window(tag="Primary Window"):
     dpg.add_text("Serial Port:")
     dpg.bind_item_font(dpg.last_item(), heading_font)
     dpg.bind_item_theme(dpg.last_item(), text_heading_theme)
 
-    dpg.add_combo(SerialPortAccess.list_devices(), callback=com_port_changed)
-    dpg.add_button(label="Set RTS", callback=button_set_rts)
-    dpg.add_button(label="Clear RTS", callback=button_clear_rts)
-    dpg.add_spacer()
+    with dpg.group(horizontal=True):
+        dpg.add_spacer(width=4)
+        dpg.add_combo(SerialPortAccess.list_devices(), callback=com_port_changed, tag="PortListCombo")
+        dpg.add_button(label="Refresh", callback=button_refresh_ports)
+
+    dpg.add_spacer(height=8)
+
+    dpg.add_text("Toggle PTT:")
+    dpg.bind_item_font(dpg.last_item(), heading_font)
+    dpg.bind_item_theme(dpg.last_item(), text_heading_theme)
+
+    with dpg.group(horizontal=True):
+        dpg.add_spacer(width=4)
+        dpg.add_button(label="Set RTS", callback=button_set_rts)
+        dpg.add_button(label="Clear RTS", callback=button_clear_rts)
+
+    dpg.add_spacer(height=8)
 
     dpg.add_text("Audio Devices:")
     dpg.bind_item_font(dpg.last_item(), heading_font)
     dpg.bind_item_theme(dpg.last_item(), text_heading_theme)
 
-    dpg.add_button(label="Local Audio", callback=button_switch_local_audio)
-    dpg.add_button(label="Radio Audio", callback=button_switch_radio_audio)
-    dpg.add_spacer()
+    with dpg.group(horizontal=True):
+        dpg.add_spacer(width=4)
+        dpg.add_button(label="Local Audio", callback=button_switch_local_audio)
+        dpg.add_button(label="Radio Audio", callback=button_switch_radio_audio)
+
+    dpg.add_spacer(height=8)
 
     dpg.add_text("", tag="StatusBar")
 
