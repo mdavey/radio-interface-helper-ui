@@ -26,12 +26,15 @@ class AudioDeviceDefinition:
     def _set_default(node_id: int) -> None:
         subprocess.run(["wpctl", "set-default", str(node_id)])
 
-    def switch(self):
+    def switch(self) -> bool:
         pwd = PipeWireDump()
         pwd.refresh()
 
         sink_id   = pwd.get_node_id_by_name(self.sink)
         source_id = pwd.get_node_id_by_name(self.source)
+
+        if sink_id is None or source_id is None:
+            return False
 
         self._set_default(sink_id)
         self._set_default(source_id)
@@ -41,3 +44,5 @@ class AudioDeviceDefinition:
 
         if self.source_volume >= 0.0:
             self._set_volume(source_id, self.source_volume)
+
+        return True
