@@ -1,28 +1,12 @@
 import dearpygui.dearpygui as dpg
-from src.audiodevicedefinition import AudioDeviceDefinition
 from src.serialportaccess import SerialPortAccess
+from src.configuration import Configuration
 
-
-# Change these.  Sink is where audio is sent.  Source is where audio comes from.
-# Volume is float between 0.0 and 1.0
-# A value of -1.0 means volume won't be adjusted when swaping
-DefaultAudioDevice = AudioDeviceDefinition(
-    sink          = 'alsa_output.usb-miniDSP_miniDSP_2x4HD-00.analog-stereo',
-    source        = 'alsa_input.usb-ARTURIA_MiniFuse_2_8840400501033904-00.HiFi__Line3__source',
-    sink_volume   = -1.0,
-    source_volume = -1.0
-)
-
-RadioAudioDevice = AudioDeviceDefinition(
-    sink          = 'alsa_output.usb-C-Media_Electronics_Inc._USB_Audio_Device-00.analog-stereo',
-    source        = 'alsa_input.usb-C-Media_Electronics_Inc._USB_Audio_Device-00.mono-fallback',
-    sink_volume   = 0.7,  # 0.70 is about right for my FTM-150
-    source_volume = 0.38  # over 0.40 causes received audio to clip
-)
 
 # Wrapper class around pySerial  (was meant to add better error messages and state, etc...
 # But right now does almost nothing)
 SerialPort = SerialPortAccess()
+AppConf = Configuration("conf.toml")
 
 
 def set_status_text(value: str):
@@ -59,18 +43,22 @@ def button_clear_rts(sender, data):
         set_status_text("Serial port not selected or invalid")
 
 def button_switch_local_audio(sender, data):
-    global DefaultAudioDevice
+    global AppConf
     try:
-        DefaultAudioDevice.switch()
-        set_status_text("Audio switched to Local")
+        if AppConf.get_default_audio_device().switch():
+            set_status_text("Audio switched to Local")
+        else:
+            set_status_text("Unable to switch audio to local")
     except Exception as e:
         set_status_text("Unable to set audio: " + str(e))
 
 def button_switch_radio_audio(sender, data):
-    global RadioAudioDevice
+    global AppConf
     try:
-        RadioAudioDevice.switch()
-        set_status_text("Audio switched to Radio")
+        if AppConf.get_radio_audio_device().switch():
+            set_status_text("Audio switched to Radio")
+        else:
+            set_status_text("Unable to switch audio to radio")
     except Exception as e:
         set_status_text("Unable to set audio: " + str(e))
 
