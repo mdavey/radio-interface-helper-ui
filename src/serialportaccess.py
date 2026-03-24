@@ -2,7 +2,7 @@ import serial, serial.tools.list_ports
 
 class SerialPortAccess:
     def __init__(self):
-        self._serial: serial.SerialBase = None
+        self._serial: serial.SerialBase | None = None
 
     @staticmethod
     def list_devices():
@@ -12,7 +12,7 @@ class SerialPortAccess:
     def open_port(self, port: str):
         self.close_port()
         self._serial = serial.Serial(port=port, baudrate=9600, timeout=0)
-        self.clear_rts()
+        self.clear_rts() # RTS is set upon opening on my system
 
     def close_port(self):
         try:
@@ -28,7 +28,7 @@ class SerialPortAccess:
         return self._serial.rts
 
     def set_rts(self):
-        self._serial.rts = True
+        self._serial.rts = True  # this property is a @setter
 
     def clear_rts(self):
         self._serial.rts = False

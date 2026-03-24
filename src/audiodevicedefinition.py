@@ -8,7 +8,7 @@ class AudioDeviceDefinition:
     """
     This is a helper class to abstract talking to the OS about the audio devices
     We are working with both a Sink (speaker) and Source (microphone) device as a pair
-    Is uses the PipeWireDump (pw-dump) to turns PipeWire node names into ids at runtime
+    Uses the PipeWireDump (pw-dump) to turn PipeWire node names into ids at runtime
     And wp-ctl to set volumes and default devices
     """
     sink: str
@@ -28,7 +28,6 @@ class AudioDeviceDefinition:
 
     def switch(self) -> bool:
         pwd = PipeWireDump()
-        pwd.refresh()
 
         sink_id   = pwd.get_node_id_by_name(self.sink)
         source_id = pwd.get_node_id_by_name(self.source)
