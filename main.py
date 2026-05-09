@@ -1,6 +1,7 @@
 import dearpygui.dearpygui as dpg
 from src.serialportaccess import SerialPortAccess
 from src.configuration import Configuration
+from src.screenres import get_current_screen_resolution, calculate_coords_to_centre_window
 
 
 # Wrapper class around pySerial  (was meant to add better error messages and state, etc...
@@ -134,9 +135,15 @@ with dpg.window(tag="Primary Window"):
     dpg.add_text("", tag="StatusBar")
 
 
+APP_WIDTH = 500
+APP_HEIGHT = 300
+SCREEN_RESOLUTION = get_current_screen_resolution()
+WINDOW_LOCATION = calculate_coords_to_centre_window(SCREEN_RESOLUTION, APP_WIDTH, APP_HEIGHT)
+
+
 # Single window
-dpg.create_viewport(title='Radio Interface Helper', width=500, height=300)
-dpg.set_viewport_resizable(True)
+dpg.create_viewport(title='Radio Interface Helper', width=APP_WIDTH, height=APP_HEIGHT, x_pos=WINDOW_LOCATION[0], y_pos=WINDOW_LOCATION[1])
+dpg.set_viewport_resizable(False)
 dpg.setup_dearpygui()
 dpg.show_viewport()
 dpg.set_primary_window("Primary Window", True)
