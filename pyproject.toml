@@ -1,9 +1,9 @@
 [project]
-name = "ftm-150-interface"
-version = "0.1.0"
-description = "Add your description here"
+name = "radio-interface-helper-ui"
+version = "0.1.1"
+description = "Control RTS and Audio deivces on Linux"
 requires-python = ">=3.13"
 dependencies = [
-    "dearpygui>=2.2",
+    "dearpygui>=2.3.1",
     "pyserial>=3.5",
 ]
