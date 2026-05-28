@@ -1,4 +1,4 @@
-import serial, serial.tools.list_ports
+import serial, serial.tools.list_ports, serial.tools
 
 class SerialPortAccess:
     def __init__(self):
@@ -6,8 +6,9 @@ class SerialPortAccess:
 
     @staticmethod
     def list_devices():
-        comports = [str(port.device) for port in serial.tools.list_ports.comports()]
-        return list(reversed(comports))
+        return serial.tools.list_ports.comports()
+        # comports = [str(port.device) for port in serial.tools.list_ports.comports()]
+        # return list(reversed(comports))
 
     def open_port(self, port: str):
         self.close_port()
@@ -32,3 +33,14 @@ class SerialPortAccess:
 
     def clear_rts(self):
         self._serial.rts = False
+
+
+if __name__ == "__main__":
+    for p in serial.tools.list_ports.comports():
+        print(f"{p.device}")
+        print(f"{p.product}")
+        print(f"{p.location}")
+
+        print("")
+        print(dir(p))
+        print("")

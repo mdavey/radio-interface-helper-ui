@@ -53,6 +53,9 @@ sink = "alsa_output.usb-C-Media_Electronics_Inc._USB_Audio_Device-00.analog-ster
 source = "alsa_input.usb-C-Media_Electronics_Inc._USB_Audio_Device-00.mono-fallback"
 sink_volume = 0.7
 source_volume = 0.38
+
+[default_com_port]
+product = "CP2102N USB to UART Bridge Controller"
 ```
 
 ## License

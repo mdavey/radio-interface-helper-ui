@@ -23,9 +23,23 @@ def com_port_changed(sender, data):
         set_status_text(str(e))
 
 def button_refresh_ports(sender, data):
-    devices = SerialPortAccess.list_devices()
-    dpg.configure_item("PortListCombo", items=devices)
-    set_status_text("Found {} devices".format(len(devices)))
+    raw_devices = SerialPortAccess.list_devices()
+    devices = [f"{d.device}"  for d in raw_devices if d.location is not None]
+    dpg.configure_item("PortListCombo", items=list(reversed(devices)))
+
+    # See if we should auto select one
+    if len(devices) > 0:
+        conf_value = AppConf.get_default_com_port_product
+        auto_select = devices[0]
+
+        for d in raw_devices:
+            if d.product == conf_value:
+                auto_select = d.device
+
+        dpg.set_value("PortListCombo", auto_select)
+        com_port_changed(None, auto_select)
+
+    set_status_text("Found {} devices.  Auto selected: {}".format(len(devices), auto_select))
 
 def button_set_rts(sender, data):
     global SerialPort
@@ -105,7 +119,7 @@ with dpg.window(tag="Primary Window"):
 
     with dpg.group(horizontal=True):
         dpg.add_spacer(width=4)
-        dpg.add_combo(SerialPortAccess.list_devices(), callback=com_port_changed, tag="PortListCombo")
+        dpg.add_combo([], callback=com_port_changed, tag="PortListCombo")
         dpg.add_button(label="Refresh", callback=button_refresh_ports)
 
     dpg.add_spacer(height=8)
@@ -147,5 +161,6 @@ dpg.set_viewport_resizable(False)
 dpg.setup_dearpygui()
 dpg.show_viewport()
 dpg.set_primary_window("Primary Window", True)
+button_refresh_ports(None, None)
 dpg.start_dearpygui()
 dpg.destroy_context()
